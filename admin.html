@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>QR-Verwaltung</title>
+  <link rel="stylesheet" href="./style.css" />
+  <script src="./js/config.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qr-code-styling/1.6.0/qr-code-styling.min.js" defer></script>
+  <script defer src="./js/admin.js"></script>
+</head>
+<body>
+  <main class="shell">
+    <section class="card">
+      <div class="row" style="justify-content:space-between; align-items:flex-start;">
+        <div>
+          <div class="badge">Admin</div>
+          <h1>QR-Codes verwalten</h1>
+          <p class="muted">Codes anlegen, Ziel-URLs ändern, löschen, kopieren, QR-Codes herunterladen und Klickzahlen sehen.</p>
+        </div>
+        <div class="toolbar">
+          <button class="button secondary" id="reload">Neu laden</button>
+          <button class="button secondary" id="exportJson">Export JSON</button>
+          <label class="button secondary" for="importFile" style="cursor:pointer;">Import JSON</label>
+          <input id="importFile" type="file" accept="application/json" class="hidden" />
+        </div>
+      </div>
+
+      <div id="message" class="notice">Bereit.</div>
+
+      <div class="grid" style="margin-top:20px;">
+        <section class="stack">
+          <div class="card" style="padding:20px; background:rgba(255,255,255,.03);">
+            <h2>Backend-Zugang</h2>
+
+            <div class="stack">
+              <div class="field">
+                <label for="backendMode">Modus</label>
+                <select id="backendMode">
+                  <option value="github">GitHub Pages + Daten-Repo</option>
+                  <option value="worker">Cloudflare Worker + KV</option>
+                </select>
+              </div>
+
+              <div id="githubSettings" class="stack">
+                <div class="row">
+                  <div class="field" style="flex:1;">
+                    <label for="owner">Daten-Repo Owner</label>
+                    <input id="owner" placeholder="dein-name" />
+                  </div>
+                  <div class="field" style="flex:1;">
+                    <label for="repo">Daten-Repo</label>
+                    <input id="repo" placeholder="qr-shortener-data" />
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="field" style="flex:1;">
+                    <label for="branch">Branch</label>
+                    <input id="branch" placeholder="main" />
+                  </div>
+                  <div class="field" style="flex:1;">
+                    <label for="codesFolder">Codes-Ordner</label>
+                    <input id="codesFolder" placeholder="codes" />
+                  </div>
+                </div>
+
+                <div class="field">
+                  <label for="token">GitHub Token</label>
+                  <input id="token" type="password" placeholder="Fine-grained Token mit Contents: write" />
+                </div>
+              </div>
+
+              <div id="workerSettings" class="stack hidden">
+                <div class="field">
+                  <label for="workerBase">Worker API Base</label>
+                  <input id="workerBase" placeholder="https://dein-worker.example.workers.dev" />
+                </div>
+
+                <div class="field">
+                  <label for="workerToken">Worker Admin Token</label>
+                  <input id="workerToken" type="password" placeholder="ADMIN_TOKEN" />
+                </div>
+              </div>
+
+              <label class="row" style="gap:10px; align-items:center;">
+                <input id="rememberToken" type="checkbox" style="width:auto;" />
+                <span>Token im Browser speichern</span>
+              </label>
+
+              <div class="toolbar">
+                <button class="button secondary" id="savePrefs">Einstellungen speichern</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="padding:20px; background:rgba(255,255,255,.03);">
+            <h2>Eintrag anlegen / ändern</h2>
+
+            <div class="stack">
+              <div class="field">
+                <label for="code">Shortcode</label>
+                <input id="code" placeholder="z. B. qr123" />
+              </div>
+              <div class="field">
+                <label for="url">Ziel-URL</label>
+                <input id="url" placeholder="https://example.com/seite" />
+              </div>
+              <div class="field">
+                <label for="title">Titel / Notiz</label>
+                <input id="title" placeholder="Optional" />
+              </div>
+              <div class="field">
+                <label for="shortUrl">Kurzlink</label>
+                <input id="shortUrl" readonly />
+              </div>
+
+              <div class="toolbar">
+                <button class="button secondary" id="generateCode">Code erzeugen</button>
+                <button class="button secondary" id="copyShortUrl">Kurzlink kopieren</button>
+                <button class="button secondary" id="downloadPng">QR PNG</button>
+                <button class="button secondary" id="downloadSvg">QR SVG</button>
+                <button class="button" id="saveEntry">Speichern</button>
+              </div>
+
+              <div class="preview-box">
+                <div class="muted small">QR-Vorschau</div>
+                <div class="qr-wrap"><div id="qrHolder"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="notice small">
+            Tipp: Die QR-URL ist die Shortlink-URL mit `?qrid=CODE`.
+          </div>
+        </section>
+
+        <section class="stack">
+          <div class="card" style="padding:20px; background:rgba(255,255,255,.03);">
+            <div class="row" style="justify-content:space-between; align-items:center;">
+              <h2 style="margin:0;">Vorhandene Codes</h2>
+              <input id="search" placeholder="Filtern …" style="max-width:240px;" />
+            </div>
+            <div style="overflow:auto; margin-top:12px;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Code</th>
+                    <th>Ziel</th>
+                    <th>Klicks</th>
+                    <th>Aktionen</th>
+                  </tr>
+                </thead>
+                <tbody id="tableBody">
+                  <tr><td colspan="4" class="muted">Lade …</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="notice small">
+            Im Worker-Modus werden Redirects und Zähler serverseitig über Cloudflare KV verwaltet.
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
