@@ -1,0 +1,7 @@
+name = "qr-shortener-worker"
+main = "src/index.js"
+compatibility_date = "2026-05-13"
+
+[[kv_namespaces]]
+binding = "QR_CODES"
+id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
