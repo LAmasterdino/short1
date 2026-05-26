@@ -3,11 +3,11 @@ window.SHORTENER_CONFIG = {
   mode: "github", // "github" oder "worker"
 
   github: {
-    dataRepoOwner: "DEIN_GITHUB_USERNAME",
-    dataRepoName: "qr-shortener-data",
+    dataRepoOwner: "LAmasterdino",
+    dataRepoName: "short1data",
     branch: "main",
     codesFolder: "codes",
-    cdnBase: "https://cdn.jsdelivr.net/gh/DEIN_GITHUB_USERNAME/qr-shortener-data@main/codes"
+    cdnBase: "https://cdn.jsdelivr.net/gh/LAmasterdino/short1data@main/codes"
   },
 
   worker: {
